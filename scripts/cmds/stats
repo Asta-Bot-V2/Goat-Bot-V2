@@ -8,7 +8,7 @@ module.exports = {
     countDown: 5,
     role: 2,
     category: 'tools',
-    shortDescription: { en: "" }
+    shortDescription: { en: "status" }
   },
 
   onStart: async function({ event, api, message, args, usersData, threadsData }) {
