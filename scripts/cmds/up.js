@@ -34,7 +34,7 @@ module.exports = {
 		const freeMemory = `𝗙𝗿𝗲𝗲 𝗠𝗲𝗺𝗼𝗿𝘆: ${Math.round(os.freemem() / (1024 * 1024 * 1024))} GB`;
 		const uptimeString = `𝘂𝗽𝘁𝗶𝗺𝗲: ${days} 𝗱𝗮𝘆𝘀, ${hours} 𝗵𝗼𝘂𝗿𝘀, ${mins} 𝗺𝗶𝗻𝘂𝘁𝗲𝘀, 𝗮𝗻𝗱  ${seconds} 𝘀𝗲𝗰𝗼𝗻𝗱𝘀`;
 
-		const response = `🕒 ${uptimeString}\n━━━━━━━━━━━━━\n\n📡 ${system}\n🛡 ${cores}\n⚔ 𝖻𝗈𝗍 𝗈𝗇𝗅𝗂𝗇𝖾🟢\n📈 Total Users: ${threadsData.size}\n📉 Total Threads: ${threadsData.size}\n⚖ AI Usage: 0.0\n📊 RAM Usage: ${Math.round(process.memoryUsage().rss / (1024 * 1024))} MB\n💽 𝗧𝗼𝘁𝗮𝗹(𝗥𝗔𝗠): ${Math.round(os.totalmem() / (1024 * 1024 * 1024))} GB\n💾 𝗖𝘂𝗿𝗿𝗲𝗻𝘁(𝗥𝗔𝗠): ${Math.round(os.freemem() / (1024 * 1024 * 1024))} GB\n🛫 𝗣𝗶𝗻𝗴: 15 ms\n⏰ 𝗨𝗽𝘁𝗶𝗺𝗲(𝗦𝗲𝗰𝗼𝗻𝗱𝘀): ${Math.floor(process.uptime())}\n━━━━━━━━━━━━━\n📩𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗔𝗖𝗧:https://www.facebook.com/profile.php?id=100052395031835`;
+		const response = `🕒 ${uptimeString}\n━━━━━━━━━━━━━\n\n📡 ${system}\n🛡 ${cores}\n⚔ 𝖻𝗈𝗍 𝗈𝗇𝗅𝗂𝗇𝖾🟢\n📈 Total Users: ${threadsData.size}\n📉 Total Threads: ${threadsData.size}\n⚖ AI Usage: 0.0\n📊 RAM Usage: ${Math.round(process.memoryUsage().rss / (1024 * 1024))} MB\n💽 𝗧𝗼𝘁𝗮𝗹(𝗥𝗔𝗠): ${Math.round(os.totalmem() / (1024 * 1024 * 1024))} GB\n💾 𝗖𝘂𝗿𝗿𝗲𝗻𝘁(𝗥𝗔𝗠): ${Math.round(os.freemem() / (1024 * 1024 * 1024))} GB\n🛫 𝗣𝗶𝗻𝗴: 15 ms\n⏰ 𝗨𝗽𝘁𝗶𝗺𝗲(𝗦𝗲𝗰𝗼𝗻𝗱𝘀): ${Math.floor(process.uptime())}\n━━━━━━━━━━━━━\n📩𝗔𝗗𝗠𝗜𝗡 𝗖𝗢𝗡𝗧𝗔𝗖𝗧:https://www.facebook.com/femi.gbemi.58`;
 
 		message.reply(response);
 	},
