@@ -45,8 +45,8 @@ onReply: async function({ api, event, Reply, getLang, commandName, prefix }) {
         const index = body.split(/\s+/);
         for (const singleIndex of index) {
             if (isNaN(singleIndex) || singleIndex <= 0 || singleIndex > Reply.pending.length) return api.sendMessage(getLang("invaildNumber", singleIndex), threadID, messageID);
-            api.sendMessage(`✨ 𝗡𝗼𝘁𝗶𝗳𝗶𝗰𝗮𝘁𝗶𝗼𝗻\nMateo 𝗁𝖺𝗌 𝖻𝖾𝖾𝗇 approved by 𝗈𝗐𝗇𝖾𝗋𝗌.`, Reply.pending[singleIndex - 1].threadID);
-            return api.sendMessage(`【 ? 】· 𝗠𝗔𝗧𝗘𝗢 𝗕𝗢𝗧`, Reply.pending[singleIndex - 1].threadID);
+            api.sendMessage(`✨ 𝗡𝗼𝘁𝗶𝗳𝗶𝗰𝗮𝘁𝗶𝗼𝗻\nAsta 𝗁𝖺𝗌 𝖻𝖾𝖾𝗇 approved by 𝗈𝗐𝗇𝖾𝗋𝗌.`, Reply.pending[singleIndex - 1].threadID);
+            return api.sendMessage(`𝗔𝗦𝗧𝗔`, Reply.pending[singleIndex - 1].threadID);
             count+=1;
         }
         return api.sendMessage(getLang("approveSuccess", count), threadID, messageID);
