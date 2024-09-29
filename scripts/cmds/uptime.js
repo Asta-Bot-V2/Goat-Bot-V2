@@ -4,8 +4,8 @@ const moment = require('moment-timezone');
 
 module.exports = {
   config: {
-    name: "uptime3",
-    aliases: ["upt3","stats"],
+    name: "uptime",
+    aliases: ["upt3","sta"],
     version: "1.5",
     author: "DRG",
     role: 0,
@@ -44,7 +44,7 @@ module.exports = {
 
       // Ping
       const timeStart = Date.now();
-      await api.sendMessage("🔰 DRG AI STATS IS HERE 🔰", event.threadID);
+      await api.sendMessage("¥ Asta Stats  ¥", event.threadID);
       const ping = Date.now() - timeStart;
 
       let pingStatus = "Not smooth, throw your router buddy!";
