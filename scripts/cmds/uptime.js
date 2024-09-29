@@ -1,111 +1,85 @@
-const moment = require('moment-timezone');const fs = require('fs');const path = require('path');
-const os = require('os');
-const si = require('systeminformation');
-const { performance } = require('perf_hooks');
-
-// Assuming config.json is in the same directory as info.js
-const configPath = path.resolve(__dirname, '../config.dev.json'); // Adjust the path based on your project structure
-
-// Read and parse config.dev.json
-let config = {};
-try {
-    config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-} catch (error) {
-    console.error("Error reading config.json:", error.message);
-    // Handle the error, maybe exit or provide default config values
-}
+const fast = require('fast-speedtest-api');
+const NepaliDate = require('nepali-date');
+const moment = require('moment-timezone');
 
 module.exports = {
-    config: {
-        name: "uptime",
-        aliases: ["up"],
-        version: "1.5", 
-        author: "Itz Aryan",
-        countDown: 5,
-        role: 0, 
-        shortDescription: {
-            vi: "Cung cấp thông tin bot và hệ thống",
-            en: "Provides bot and system information"
-        },
-        longDescription: {
-            vi: "Lệnh này cung cấp thông tin chi tiết về bot và hệ thống bao gồm thời gian hoạt động, thông tin hệ điều hành, CPU, bộ nhớ, đĩa, mạng và các thông tin bổ sung khác.",
-            en: "This command provides detailed information about the bot and system including uptime, OS details, CPU, memory, disk, network, and additional settings."
-        },
-        category: "owner",
-        guide: {
-            vi: "Sử dụng lệnh này để nhận thông tin chi tiết về bot và hệ thống của bạn.",
-            en: "Use this command to get detailed information about your bot and system."
-        },
-        envConfig: config 
+  config: {
+    name: "uptime3",
+    aliases: ["upt3","stats"],
+    version: "1.5",
+    author: "DRG",
+    role: 0,
+    shortDescription: {
+      en: "Uptime"
     },
-    onStart: async function ({ api, event, usersData, threadsData }) {
-        const botName = config.nickNameBot || "Goatbot"; // Fetching from config
-        const botPrefix = config.prefix || "-";
-        const botVersion = "1.5"; 
-        const botDescription = "This bot can help you with various tasks including managing the server, providing information, and more."; // Manually set bot description
+    longDescription: {
+      en: "Shows uptime, speed, ping, and current date/time in Nepal."
+    },
+    category: "system",
+    guide: {
+      en: "Use {p}allinone to see combined stats, speed test, ping, and date/time."
+    }
+  },
+  onStart: async function ({ api, event, usersData, threadsData }) {
+    try {
+      // Uptime Calculation
+      const uptime = process.uptime();
+      const hours = Math.floor(uptime / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      const seconds = Math.floor(uptime % 60);
+      const uptimeString = `${hours}Hrs ${minutes}min ${seconds}sec`;
 
-        const now = moment().tz(config.timeZone || 'Africa/Lusaka'); // Fetching from config
-        const date = now.format('MMMM Do YYYY');
-        const time = now.format('h:mm:ss A');
+      // Speed Test
+      const speedTest = new fast({
+        token: "YXNkZmFzZGxmbnNkYWZoYXNkZmhrYWxm",
+        verbose: false,
+        timeout: 10000,
+        https: true,
+        urlCount: 5,
+        bufferSize: 8,
+        unit: fast.UNITS.Mbps
+      });
 
-        // Manually set image links
-        const links = [
-            "https://i.imgur.com/iu0YeDe.jpeg"
-        ];
-        const link = links[Math.floor(Math.random() * links.length)];
+      const speedResult = await speedTest.getSpeed();
 
-        // System uptime calculation
-        const systemUptime = os.uptime();
-        const systemUptimeString = formatUptime(systemUptime);
+      // Ping
+      const timeStart = Date.now();
+      await api.sendMessage("🔰 DRG AI STATS IS HERE 🔰", event.threadID);
+      const ping = Date.now() - timeStart;
 
-        // Process uptime (since bot started)
-        const processUptime = process.uptime();
-        const processUptimeString = formatUptime(processUptime);
+      let pingStatus = "Not smooth, throw your router buddy!";
+      if (ping < 400) {
+        pingStatus = "Smooth like Ferrari!";
+      }
 
-        // OS information
-        const osInfo = await si.osInfo();
-        const osArchitecture = os.arch();
-        const osHostname = os.hostname();
-        const osHomeDir = os.homedir();
+      // Date and Time in Nepal
+      const nepalTime = moment.tz("Asia/Kathmandu").format("h: mm: ss A");
+      const nepaliDate = new NepaliDate(new Date());
+      const bsDateStr = nepaliDate.format("dddd DD, MMMM YYYY");
 
-        // CPU information
-        let cpuCurrentSpeed = {};
-        let cpuLoad = {};
-        let cpuUsage = 'CPU information not available';
-        try {
-            cpuCurrentSpeed = await si.cpuCurrentspeed();
-            cpuLoad = await si.currentLoad();
-            cpuUsage = `User ${cpuLoad.currentload_user ? cpuLoad.currentload_user.toFixed(2) : 'N/A'}%, System ${cpuLoad.currentload_system ? cpuLoad.currentload_system.toFixed(2) : 'N/A'}%`;
-        } catch (error) {
-            console.error("Error fetching CPU information:", error.message);
-        }
-        const cpuManufacturer = cpuCurrentSpeed.manufacturer || "Unknown";
+      // Total Users and Threads
+      const allUsers = await usersData.getAll();
+      const allThreads = await threadsData.getAll();
 
-        // CPU Temperature
-        const cpuTemp = await si.cpuTemperature();
-        const cpuTempString = `${cpuTemp.main} °C`; // Adjust according to your preferred formatting
+      // Assuming global.utils.getStreamFromURL(img) is correctly defined
+      const imgURL= "https://i.imgur.com/tz7QIgt.jpeg";
+      const attachment = await global.utils.getStreamFromURL(imgURL);
+      
+      // Create combined message
+      const combinedMessage =
+        `⏰ | Uptime : ${uptimeString}\n` +
+        `📶 | Speed : ${speedResult} MBPS\n` +
+        `🛜 | Ping : ${ping} MS\n` +
+        `👥 | Users : ${allUsers.length} users\n` + 
+        `🚀 | Threads : ${allThreads.length} threads\n` +
+        `🔰 | Ping Status : ${pingStatus}\n` +
+        `⏱ | Time : ${nepalTime}\n📆 | Date (AD) : ${moment.tz("Asia/Kathmandu").format("dddd DD, MMMM YYYY")}\n📅 | Date (BS) : ${bsDateStr}`;
 
-        // GPU information
-        let gpuInfo = '';
-        try {
-            const graphics = await si.graphics();
-            gpuInfo = `GPU: ${graphics.controllers[0].model}, VRAM: ${graphics.controllers[0].vram} GB`;
-        } catch (error) {
-            console.error("Error fetching GPU information:", error.message);
-            gpuInfo = 'GPU information not available';
-        }
-
-        // Memory information
-        const memInfo = await si.mem();
-        const totalMemory = (memInfo.total / (1024 ** 3)).toFixed(2);
-        const freeMemory = (memInfo.free / (1024 ** 3)).toFixed(2);
-        const usedMemory = (memInfo.used / (1024 ** 3)).toFixed(2);
-
-        // Disk information
-        const diskInfo = await si.fsSize();
-        const diskType = diskInfo[0].type;
-        const diskSpace = `Total ${diskInfo[0].size}, Used ${diskInfo[0].used}, Available ${diskInfo[0].available}`;
-
-        // Network interfaces
-        const networkInterfaces = os.networkInterfaces();
-        const networkInfo = Object.keys(networkInterfaces).map(name => `${name}: ${networkInterfaces[name][0].address} (IPv${networkI
+      // Send the combined message with attachment
+    api.sendMessage({ body: combinedMessage, attachment: attachment }, event.threadID);
+    } catch (error) {
+      console.error(error);
+      api.sendMessage("An error occurred while retrieving data.", event.threadID);
+    }
+  }
+};
