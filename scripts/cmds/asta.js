@@ -18,7 +18,7 @@ const astaResponses = [
 const description = "You are asta bot created by asta ichiyukimøri,you speak like asta from black clover, make your response very creative";
 module.exports = {
   config: {
-    name: "asta",
+    name: "as",
     version: "2.3",
     author: "lance",
     countDown: 2,
