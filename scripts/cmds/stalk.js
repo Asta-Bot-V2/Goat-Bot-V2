@@ -1,76 +1,79 @@
-var cred = "Asta";
 const axios = require("axios");
 
 module.exports = {
-    config: {
-        name: "stalk",
-        version: "1.0",
-        author: "Samuel",
-        countDown: 5,
-        role: 0,
-        shortDescription: "",
-        longDescription: {
-            en: ""
-        },
-        category: "",
-        guide: {
-            en: "{pn}"
-        },
-        credits: "Samuel"
+  config: {
+    name: 'stalk',
+    version: '2.5',
+    author: 'ArYAN',
+    countDown: 10,
+    role: 0,
+    longDescription: {
+      en: "Get info using uid/mention/reply to a message"
     },
-    onStart: async function({ api, event, Thread,args }) {
-        try {
-            const fs = global.goat["fs-extra"];
-            const request = global.goat["request"];
-            const { threadID, senderID, messageID } = event;
-            if (module.config.credits !== `${cred}`) {
-                return api.sendMessage(`Please change the credits to Samuel.`, threadID, messageID);
-            }
-            let id;
-            if (args.join().indexOf('@') !== -1) {
-                id = Object.keys(event.mentions);
-            } else {
-                id = args[0] || senderID;
-            }
-            if (event.type === "message_reply") {
-                id = event.messageReply.senderID;
-            } else if (args.join().indexOf(".com/") !== -1) {
-                const res = await axios.get(`https://api.reikomods.repl.co/sus/fuid?link=${args.join(" ")}`);
-                id = res.data.result;
-            }
-            const res = await api.getUserInfo(id);
-            const gender = res.gender === 'male' ? "Male" : res.gender === 'female' ? "Female" : "Not found";
-            const birthday = res.birthday === '30/04/2008' ? "30/04/2008" : res.birthday;
-            const love = res.relationship_status === 'Secret' ? "Cannot be revealed" : res.relationship_status;
-            const location = res.location === 'not telling' ? "secret" : res.location.name;
-            const hometown = res.hometown === 'Nigeria' ? "Nigeria" : res.hometown.name;
-            const follow = res.follow === 'check bio' ? "check bio" : res.follow;
-            const usern = res.username === 'asta mage' ? res.id : res.username;
-            const usern1 = res.username === 'asta mage' ? "asta mage" : res.username;
-            const rs = res.love === 'Tech' ? "Tech" : res.love.name;
-            const callback = function() {
-                return api.sendMessage({
-                    body: `•——[INFORMATION]——•
-Name: ${res.name}
-Facebook URL: https://facebook.com/${usern}
-Username: ${usern}
-Birthday: ${birthday}
-Followers: ${follow}
-Gender: ${gender}
-UID: ${res.id}
-Location: ${location}
-Hometown: ${hometown}
-Relationship Status: ${love}
-In relationship with: ${rs}
-•——[INFORMATION]——•`,
-                    attachment: fs.createReadStream(__dirname + `/cache/image.png`)
-                }, threadID, () => fs.unlinkSync(__dirname + `/cache/image.png`), messageID);
-            };
-            return request(encodeURI(res.avatar)).pipe(fs.createWriteStream(__dirname + `/cache/image.png`)).on("close", callback);
-        } catch (err) {
-            console.log(err);
-            const { threadID } = event;
-            return api.sendMessage(`Error`, threadID);
-        }
+    category: "info",
+    guide: {
+      vi: "",
+      en: "${pn} uid/@mention/reply"
+    },
+  },
+
+  onStart: async function ({ api, event, args, userData, usersData }) {
+    let id;
+    if (args.join().includes('@')) {
+      id = Object.keys(event.mentions)[0];
+    } else {
+      id = args[0] || event.senderID;
     }
+
+    if (event.type === "message_reply") {
+      id = event.messageReply.senderID;
+    }
+
+    try {
+      const uid = id;
+
+      const response = await axios.get(`https://aryan-apis.onrender.com/stalk/fb?uid=${uid}&apikey=aryan`);
+      const userData = response.data;
+
+      const name = userData.name;
+      const link_profile = userData.link;
+      const first_name = userData.first_name;
+      // Change the format of created_time
+      const created_time = new Date(userData.created_time).toLocaleDateString('en-US');
+      const web = userData.website || "No website data found!";
+      const gender = userData.gender || "No Gender Data found!";
+      const relationship_status = userData.relationship_status || "No relationship data found!";
+      const love = userData.significant_other || "No love data found!";
+      const bday = userData.birthday || "No birthday data found!";
+      const follower = userData.subscribers?.summary?.total_count || "No followers data found!"; 
+      const is_verified = userData.is_verified;
+      const quotes = userData.quotes || "No quote data found!";
+      const about = userData.about || "No about data found!";
+      const locale = userData.locale || "No local data found!";
+      const hometown = userData.hometown?.name || "No Hometown data found!";
+      const cover = userData.cover || "No Cover photo found!";
+      const messageBody = `
+ðŸ’œ ð—™ð—®ð—°ð–¾ð–»ð—ˆð—ˆð—„ ð—¦ð˜ð—®ð—¹ð—¸
+â”â”â”â”â”â”â”â”â”â”â”â”â”â”
+\nð–­ð–ºð—†ð–¾: ${name}
+ð–¥ð—‚ð—‹ð—Œð— ð–­ð–ºð—†ð–¾: ${first_name}
+ð–¨ð–½: ${uid}
+ð–¢ð—‹ð–¾ð–ºð—ð—‚ð—ˆð—‡ ð–£ð–ºð—ð–¾: ${created_time}
+ð–¯ð—‹ð—ˆð–¿ð—‚ð—…ð–¾ ð–«ð—‚ð—‡ð—„: ${link_profile}
+ð–¦ð–¾ð—‡ð–½ð–¾ð—‹: ${gender}
+ð–±ð–¾ð—…ð–ºð—ð—‚ð—ˆð—‡ð—Œð—ð—‚ð—‰ ð–²ð—ð–ºð—ð—Žð—Œ: ${relationship_status}
+ð–¡ð—‚ð—‹ð—ð—ð–½ð–ºð—’: ${bday}
+ð–¥ð—ˆð—…ð—…ð—ˆð—ð–¾ð—‹ð—Œ: ${follower}
+ð–¨ð—Œ ð–µð–¾ð—‹ð—‚ð–¿ð—‚ð–¾ð–½: ${is_verified}
+ð–§ð—ˆð—†ð–¾ð—ð—ˆð—ð—‡: ${hometown}
+ð–«ð—ˆð–¼ð–ºð—…ð–¾: ${locale}
+â”â”â”â”â”â”â”â”â”â”â”â”â”â”`;
+
+      const avatarUrl = await usersData.getAvatarUrl(uid);
+
+      api.sendMessage({ body: messageBody, attachment: await global.utils.getStreamFromURL(avatarUrl)}, event.threadID);
+    } catch (err) {
+      api.sendMessage(`Error: ${err.message}`, event.threadID, event.messageID);
+    }
+  }
 };
