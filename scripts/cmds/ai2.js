@@ -1,198 +1,150 @@
-const axios = require('axios');
+const axios = require("axios");
+const path = require("path");
+const fs = require("fs-extra");
 
-// config 
-const apiKey = "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";
-const maxTokens = 400;
-const numberGenerateImage = 5;
-const maxStorageMessage = 5;
+const Prefixes = ["Asta", "staria", "Ai"];
 
-if (!global.temp.openAIUsing)
-	global.temp.openAIUsing = {};
-if (!global.temp.openAIHistory)
-	global.temp.openAIHistory = {};
-
-const { openAIUsing, openAIHistory } = global.temp;
+global.chatHistory = {};
 
 module.exports = {
-	config: {
-		name: "sammy",
-    aliases: ["Sæmmy", "Sam", "sam", "ai", "Ai"],
-    usePrefix: false,
-		version: "1.2",
-		author: "NTKhang",
-		countDown: 1,
-		role: 0,
-		shortDescription: {
-			vi: "sammy chat",
-			en: "sammy chat"
-		},
-		longDescription: {
-			vi: "sammy chat",
-			en: "sammy chat"
-		},
-		category: "box chat",
-		guide: {
-			vi: "   {pn} <draw> <nội dung> - tạo hình ảnh từ nội dung"
-				+ "\n   {pn} <clear> - xóa lịch sử chat với gpt"
-				+ "\n   {pn} <nội dung> - chat với gpt",
-			en: "   {pn} <draw> <content> - create image from content"
-				+ "\n   {pn} <clear> - clear chat history with gpt"
-				+ "\n   {pn} <content> - chat with gpt"
-		}
-	},
+  config: {
+    name: "asta",
+    version: "2.2.4",
+    author: "Hassan", // do not change
+    role: 2,
+    category: "ai",
+    shortDescription: {
+      en: "Asks AI for an answer.",
+    },
+    longDescription: {
+      en: "Asks AI for an answer based on the user prompt.",
+    },
+    guide: {
+      en: `{pn} [prompt]
 
-	langs: {
-		vi: {
-			apiKeyEmpty: "╔════ஜ۩۞۩ஜ═══╗\n\nPlease provide api key \nfor openai at file \nscripts/cmds/sammy.js\n\n╚════ஜ۩۞۩ஜ═══╝",
-			invalidContentDraw: "╔════ஜ۩۞۩ஜ═══╗\n\nPlease enter what you\n want to draw\n\n╚════ஜ۩۞۩ஜ═══╝",
-			yourAreUsing: "╔════ஜ۩۞۩ஜ═══╗\n\nYou are using gpt chat,\n please wait to come back after \nthe previous request ends\n\n╚════ஜ۩۞۩ஜ═══╝",
-			processingRequest: "╔════ஜ۩۞۩ஜ═══╗\n\nProcessing your request,\n it may take a few minutes,\n please wait\n\n╚════ஜ۩۞۩ஜ═══╝",
-			invalidContent: "╔════ஜ۩۞۩ஜ═══╗\n\nPlease enter what\n you want to chat\n\n╚════ஜ۩۞۩ஜ═══╝",
-			error: "╔════ஜ۩۞۩ஜ═══╗\n\nAn error occurred\n%1\n\n╚════ஜ۩۞۩ஜ═══╝",
-			clearHistory: "╔════ஜ۩۞۩ஜ═══╗\n\nDeleted your chat\n history with sammy\n\n╚════ஜ۩۞۩ஜ═══╝"
-		},
-		en: {
-			apiKeyEmpty: "╔════ஜ۩۞۩ஜ═══╗\n\nPlease provide apikey,\n for openai at file scripts/cmds/sammy.js\n\n╚════ஜ۩۞۩ஜ═══╝",
-			invalidContentDraw: "╔════ஜ۩۞۩ஜ═══╗\n\nPlease enter the content\n you want to draw\n\n╚════ஜ۩۞۩ஜ═══╝",
-			yourAreUsing: "╔════ஜ۩۞۩ஜ═══╗\n\nYou are using gpt chat, \nplease wait until the previous request ends\n\n╚════ஜ۩۞۩ஜ═══╝",
-			processingRequest: "╔════ஜ۩۞۩ஜ═══╗\n\nProcessing your request, \this process may take a few minutes,\n please wait\n\n╚════ஜ۩۞۩ஜ═══╝",
-			invalidContent: "╔════ஜ۩۞۩ஜ═══╗\n\nPlease enter the content you want to chat\n\n╚════ஜ۩۞۩ஜ═══╝",
-			error: "╔════ஜ۩۞۩ஜ═══╗\n\nAn error has occurred\n%1\n\n╚════ஜ۩۞۩ஜ═══╝",
-			clearHistory: "╔════ஜ۩۞۩ஜ═══╗\n\nYour chat history with\n Sammy has been deleted\n\n╚════ஜ۩۞۩ஜ═══╝"
-		}
-	},
+Example usage:
+1. To ask the AI a question:
+   - {pn} What is the meaning of life?
 
-	onStart: async function ({ message, event, args, getLang, prefix, commandName }) {
-		if (!apiKey)
-			return message.reply(getLang('╔════ஜ۩۞۩ஜ═══╗\n\napiKeyEmpty\n\n╚════ஜ۩۞۩ஜ═══╝', prefix));
+2. To fetch images:
+   - {pn} etc, images image of 
+   - {pn} AI send me images of nature.
 
-		switch (args[0]) {
-			case 'img':
-			case 'image':
-			case 'draw': {
-				if (!args[1])
-					return message.reply(getLang('╔════ஜ۩۞۩ஜ═══╗\n\ninvalidContentDraw\n\n╚════ஜ۩۞۩ஜ═══╝'));
-				if (openAIUsing[event.senderID])
-					return message.reply(getLang("╔════ஜ۩۞۩ஜ═══╗\n\nyourAreUsing\n\n╚════ஜ۩۞۩ஜ═══╝"));
+3. To fetch waifu images:
+   - {pn} waifu maid
+   - {pn} waifu raiden-shogun
 
-				openAIUsing[event.senderID] = true;
+Available versatile waifu tags:
+maid, waifu, marin-kitagawa, mori-calliope, raiden-shogun, oppai, selfies, uniform, kamisato-ayaka
 
-				let sending;
-				try {
-					sending = message.reply(getLang('processingRequest'));
-					const responseImage = await axios({
-						url: "https://api.openai.com/v1/images/generations",
-						method: "POST",
-						headers: {
-							"Authorization": `Bearer ${apiKey}`,
-							"Content-Type": "application/json"
-						},
-						data: {
-							prompt: args.slice(1).join(' '),
-							n: numberGenerateImage,
-							size: '1024x1024'
-						}
-					});
-					const imageUrls = responseImage.data.data;
-					const images = await Promise.all(imageUrls.map(async (item) => {
-						const image = await axios.get(item.url, {
-							responseType: 'stream'
-						});
-						image.data.path = `${Date.now()}.png`;
-						return image.data;
-					}));
-					return message.reply({
-						attachment: images
-					});
-				}
-				catch (err) {
-					const errorMessage = err.response?.data.error.message || err.message;
-					return message.reply(getLang('error', errorMessage || ''));
-				}
-				finally {
-					delete openAIUsing[event.senderID];
-					message.unsend((await sending).messageID);
-				}
-			}
-			case 'clear': {
-				openAIHistory[event.senderID] = [];
-				return message.reply(getLang('clearHistory'));
-			}
-			default: {
-				if (!args[1])
-					return message.reply(getLang('invalidContent'));
+Available NSFW waifu tags:
+ass, hentai, milf, oral, paizuri, ecchi, ero`
+    },
+  },
+  onStart: async function ({ message, api, event, args }) {
+    // Initialization logic if needed
+  },
+  onChat: async function ({ api, event, args, message }) {
+    try {
+      const prefix = Prefixes.find(
+        (p) => event.body && event.body.toLowerCase().startsWith(p)
+      );
 
-				handleGpt(event, message, args, getLang, commandName);
-			}
-		}
-	},
-
-	onReply: async function ({ Reply, message, event, args, getLang, commandName }) {
-		const { author } = Reply;
-		if (author != event.senderID)
-			return;
-
-		handleGpt(event, message, args, getLang, commandName);
-	}
-};
-
-async function askGpt(event) {
-	const response = await axios({
-		url: "https://api.openai.com/v1/chat/completions",
-		method: "POST",
-		headers: {
-			"Authorization": `Bearer ${apiKey}`,
-			"Content-Type": "application/json"
-		},
-		data: {
-			model: "gpt-3.5-turbo-0613",
-			messages: openAIHistory[event.senderID],
-			max_tokens: maxTokens,
-			temperature: 0.7
-		}
-	});
-	return response;
-}
-
-async function handleGpt(event, message, args, getLang, commandName) {
-	try {
-		openAIUsing[event.senderID] = true;
-
-		if (
-			!openAIHistory[event.senderID] ||
-			!Array.isArray(openAIHistory[event.senderID])
-		)
-			openAIHistory[event.senderID] = [];
-
-		if (openAIHistory[event.senderID].length >= maxStorageMessage)
-			openAIHistory[event.senderID].shift();
-
-		openAIHistory[event.senderID].push({
-			role: 'user',
-			content: args.join(' ')
-		});
-
-		const response = await askGpt(event);
-		const text = response.data.choices[0].message.content;
-
-		openAIHistory[event.senderID].push({
-			role: 'assistant',
-			content: text
-		});
-
-		return message.reply(text, (err, info) => {
-			global.GoatBot.onReply.set(info.messageID, {
-				commandName,
-				author: event.senderID,
-				messageID: info.messageID
-			});
-		});
-	}
-	catch (err) {
-		const errorMessage = err.response?.data.error.message || err.message || "";
-		return message.reply(getLang('error', errorMessage));
-	}
-	finally {
-		delete openAIUsing[event.senderID];
-	}
+      if (!prefix) {
+        return;
       }
+
+      let prompt = event.body.substring(prefix.length).trim();
+
+      if (!global.chatHistory[event.senderID]) {
+        global.chatHistory[event.senderID] = [];
+      }
+
+
+      if (event.type === "message_reply" && global.chatHistory[event.senderID].length > 0) {
+        const lastPrompt = global.chatHistory[event.senderID].slice(-1)[0];
+        prompt = lastPrompt + " " + prompt;
+      }
+ global.chatHistory[event.senderID].push(prompt);
+
+      let numberImages = 6; // Default to 6 images
+      const match = prompt.match(/-(\d+)$/);
+
+      if (match) {
+        numberImages = Math.min(parseInt(match[1], 10), 8); // Max 8 images
+        prompt = prompt.replace(/-\d+$/, "").trim(); // Remove the number part from prompt
+      }
+
+      if (prompt === "") {
+        await api.sendMessage(
+          "Please provide a question for me to respond to.",
+          event.threadID
+        );
+        return;
+      }
+
+      api.setMessageReaction("âŒ›", event.messageID, () => {}, true);
+
+      const response = await axios.get(
+        `https://over-ai-yau-5001-center-hassan.vercel.app/ai?prompt=${encodeURIComponent(prompt)}`
+      );
+
+      if (response.status !== 200 || !response.data || !response.data.response) {
+        throw new Error("Unable to respond. API error or no data returned.");
+      }
+
+      const messageText = response.data.response;
+
+      const urls = messageText.match(/https?:\/\/\S+\.(jpg|jpeg|png|gif)/gi);
+
+      if (urls && urls.length > 0) {
+        const imgData = [];
+        const limitedUrls = urls.slice(0, numberImages);
+
+        for (let i = 0; i < limitedUrls.length; i++) {
+          try {
+            const imgResponse = await axios.get(limitedUrls[i], {
+              responseType: "arraybuffer",
+            });
+            const imgPath = path.join(__dirname, "cache", `image_${i + 1}.jpg`);
+            await fs.outputFile(imgPath, imgResponse.data);
+            imgData.push(fs.createReadStream(imgPath));
+          } catch (imgError) {
+            console.error("Error fetching image:", imgError);
+            await api.sendMessage(
+              `Failed to load image from ${limitedUrls[i]}.`,
+              event.threadID
+            );
+          }
+        }
+
+        if (imgData.length > 0) {
+          await api.sendMessage(
+            {
+              body: `HERE IS YOUR RESULTSâœ…`,
+              attachment: imgData,
+            },
+            event.threadID,
+            event.messageID
+          );
+          await fs.remove(path.join(__dirname, "cache"));
+        } else {
+          await api.sendMessage("No images were fetched successfully.", event.threadID);
+        }
+      } else {
+        await message.reply(messageText);
+      }
+
+      api.setMessageReaction("âœ…", event.messageID, () => {}, true);
+    } catch (error) {
+      console.error("Error in onChat:", error);
+      await api.sendMessage(
+        `Failed to get answer: ${error.message}`,
+        event.threadID
+      );
+    }
+  },
+  onReply: async function ({ api, message, event, args }) {
+    return this.onChat({ api, message, event, args });
+  },
+};
