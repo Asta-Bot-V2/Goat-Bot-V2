@@ -2,7 +2,7 @@ const axios = require("axios");
 const path = require("path");
 const fs = require("fs-extra");
 
-const Prefixes = ["Asta", "staria", "Ai"];
+const Prefixes = ["Asta", "staria", "bot"];
 
 global.chatHistory = {};
 
